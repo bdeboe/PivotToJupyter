@@ -1,0 +1,17 @@
+{
+"intersystems.servers": {
+        "pivottojupyter": {
+            "webServer": {
+                "scheme": "http",
+                "host": "localhost",
+                "port": 61773
+            },
+            "username": "_system"
+        }
+    },
+    "objectscript.conn": {
+        "server": "pivottojupyter",
+        "ns": "USER",
+        "active": true
+    }
+}

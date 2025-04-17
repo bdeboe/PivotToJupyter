@@ -1,0 +1,12 @@
+    zn "%SYS"
+    Do ##class(Security.Users).UnExpireUserPasswords("*")
+
+    zn "USER"
+    do EnableDeepSee^%SYS.cspServer("/csp/user/")
+
+    ; install samples-bi for cubes to test with
+    zpm "install samples-bi"
+    
+    ; load classes
+    do $SYSTEM.OBJ.Load("/opt/irisapp/src/PivotToJupyter/CustomKPIAction.cls","ck")
+    Do ##class(PivotToJupyter.CustomKPIAction).UpdateActionClass()
