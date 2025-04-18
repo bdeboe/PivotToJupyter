@@ -16,6 +16,18 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
 	if (pAction="PivotToJupyter") {
         // Convert selected context to a new table
 		Set tCurrFilterSpec = $P(pContext.currFilterSpec," ",2,*)
+        If tCurrFilterSpec="" {
+            // Check filters to see if no context is selected but filters are applied
+            Set tRS=##class(%DeepSee.ResultSet).%New()
+            Do tRS.%PrepareMDX(pContext.mdx)
+            Do tRS.%GetFiltersForCellRange(.tFilters,0,0,,,,1,1)
+            set f=$O(tFilters(""))
+            While f'="" {
+                Set tCurrFilterSpec=tCurrFilterSpec_"%FILTER "_tFilters(f)
+                set f=$O(tFilters(f))
+            }
+		    Set tCurrFilterSpec = $P(tCurrFilterSpec," ",2,*)
+        }
 		Set tNewTableName = "PivotToJupyter."_pContext.cubeName_$translate($zdt($h,8)," :","")
 		Set tSC = ##class(%DeepSee.ResultSet).%CreateTable(pContext.cubeName,tNewTableName,tCurrFilterSpec)
 
