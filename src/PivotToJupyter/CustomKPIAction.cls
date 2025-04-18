@@ -5,7 +5,7 @@ XData KPI [ XMLNamespace = "http://www.intersystems.com/deepsee/kpi" ]
 {
 <kpi
 xmlns="http://www.intersystems.com/deepsee/kpi"
- name="Holefoods Custom Actions">
+ name="PivotToJupyter Custom Action">
 
 <action name="PivotToJupyter"/>
 </kpi>
