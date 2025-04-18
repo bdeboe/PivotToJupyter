@@ -57,6 +57,12 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
     # Create a new notebook
     nb = nbf.v4.new_notebook()
     
+    nb["metadata"]["kernelspec"] = {
+        "name": "python3",
+        "display_name": "Python 3",
+        "language": "python"
+    }
+    
     # Add cells
     nb.cells = [
         nbf.v4.new_markdown_cell("# InterSystems IRIS BI - Dynamic Notebook Example\n"
