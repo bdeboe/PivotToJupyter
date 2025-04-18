@@ -1,4 +1,7 @@
 # PivotToJupyter
+Table of contents
+  1. [Using this demo](#using-this-demo)
+  2. [Implementation Guide](#implementation-guide)
 
 ## Using this demo
 ### Steps to perform demo
