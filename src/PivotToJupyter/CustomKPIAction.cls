@@ -41,16 +41,15 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
 	quit $$$OK
 }
 
-ClassMethod UpdateActionClass()
+ClassMethod UpdateActionClass(pCube="HOLEFOODS")
 {
     // Update actionClass for HoleFoods cube
     Set tSC=$$$OK
-    Set tCube="HoleFoods"
     Set tActionClass="PivotToJupyter.CustomKPIAction"
 
-    Set tCubeClass=##class(%DeepSee.Utils).%GetCubeClass(tCube)
+    Set tCubeClass=##class(%DeepSee.Utils).%GetCubeClass(pCube)
 
-    Set tModel=##class(%DeepSee.Utils).%GetModel(tCube)
+    Set tModel=##class(%DeepSee.Utils).%GetModel(pCube)
     Set tModel.actionClass=tActionClass
 
     Set tSC=##class(%DeepSee.Utils).%SaveCubeDefinition(tCubeClass,,tModel.description,tModel)
