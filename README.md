@@ -8,6 +8,7 @@ Table of contents
 1) Clone Repo/Download files
 2) Navigate to directory
 3) docker compose up -d --build
+3a) Note: build can take a few minutes due to dependencies
 4) Navigate to: http://localhost:61773/csp/user/_DeepSee.UI.Analyzer.zen?$NAMESPACE=USER&CUBE=HoleFoods.cube
 5) Place some dimension on rows, DateOfSale for example
 6) Select a cell that you would like to further analyze the data behind

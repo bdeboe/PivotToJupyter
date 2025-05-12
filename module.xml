@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+  <Document name="pivottojupyter.ZPM">
+    <Module>
+      <Name>pivottojupyter</Name>
+      <Description>Demo Custom Action for IRIS BI that converts Pivot results to new table to use inside Jupyter notebook</Description>
+      <Version>1.0.0</Version>
+      <Packaging>module</Packaging>
+      <SourcesRoot>src</SourcesRoot>
+      <Resource Name="PivotToJupyter.PKG"/>
+    </Module>
+  </Document>
+</Export>

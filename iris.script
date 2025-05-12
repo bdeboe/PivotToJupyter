@@ -8,5 +8,5 @@
     zpm "install samples-bi"
     
     ; load classes
-    do $SYSTEM.OBJ.Load("/opt/irisapp/src/PivotToJupyter/CustomKPIAction.cls","ck")
+    zpm "load /opt/irisapp"
     Do ##class(PivotToJupyter.CustomKPIAction).UpdateActionClass()
