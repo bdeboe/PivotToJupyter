@@ -1,7 +1,8 @@
 # PivotToJupyter
 Table of contents
   1. [Using this demo](#using-this-demo)
-  2. [Implementation Guide](#implementation-guide)
+  2. [ZPM Install Steps Needed](#install-with-ZPM)
+  3. [Implementation Guide](#implementation-guide)
 
 ## Using this demo
 ### Steps to perform demo
@@ -28,6 +29,18 @@ Steps 5-7 (DateOfSale dragged to rows, cell for 2022 clicked, PivotToJupyer cust
 Step 8, play all cells and observe results
 
 ![Jupyter Screenshot](https://github.com/psteiwer/PivotToJupyter/blob/main/Assets/Demo3.PNG)
+
+## Install with ZPM
+```zpm "install pivottojupyter"```
+
+Installing with ZPM does not configure Python or the notebook server. It simply installs the demo KPI class. This means either the demo KPI will need to be modified for your configurations, or you will need to make configuration changes similar to what the container does.
+
+The following python libraries are used: ```notebook pandas matplotlib seaborn sqlalchemy-iris```.
+
+Manual configurations for a notebook server are also needed. The KPI expects a notebook server to be listening on port 61888 (it is actually listening on port 8888 in the container, but the container exposes this as 61888). The KPI also places generated notebook files in ```<install dir>/mgr/<namespace>/notebooks```, which means the notebook server needs to look in this directory for the files.
+
+For extra details on how these are implemented in the container, continue reading the [Implementation Guide](#implementation-guide).
+
 
 ## Implementation Guide
 
