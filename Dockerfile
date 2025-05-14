@@ -24,4 +24,4 @@ COPY --chmod=+x entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Set the default command to run Jupyter Notebook
-CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''", "--ServerApp.root_dir=/usr/irissys/mgr/user/notebooks"]
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''", "--ServerApp.root_dir=/usr/irissys/mgr/user/notebooks", "--MappingKernelManager.cull_idle_timeout=120", "--MappingKernelManager.cull_interval=60", "--MappingKernelManager.cull_connected=True"]
