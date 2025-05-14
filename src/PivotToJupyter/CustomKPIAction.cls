@@ -112,9 +112,9 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
                             #"plt.xticks(rotation=45)\n"
                             #"plt.tight_layout()\n"
                             #"plt.show()"),
-        nbf.v4.new_code_cell("# Step 1: Get numeric column with highest std dev\n"
-                            #"excluded_columns = ['ID', '%sourceId']\n" #These should be unique enough that we don't need to exclude
-                            "excluded_columns = []\n"
+        nbf.v4.new_code_cell("# ChatGPT generated code to display a dynamic chart\n"
+                            "# Step 1: Get numeric column with highest std dev\n"
+                            "excluded_columns = ['ID', '%sourceId']\n"
                             "numeric_df = df.select_dtypes(include='number').drop(columns=excluded_columns, errors='ignore')\n"
                             "std_devs = numeric_df.std().sort_values(ascending=False)\n"
                             "target_numeric_col = std_devs.index[0]\n"
