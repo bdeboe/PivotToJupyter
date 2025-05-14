@@ -104,14 +104,64 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
         nbf.v4.new_code_cell("# Check for missing values and summary statistics\n"
                             "print(df.isnull().sum())\n"
                             "df.describe()"),
-        nbf.v4.new_code_cell("# Visualize total sales by product\n"
-                            "sales_by_product = df.groupby('Product')['Revenue'].sum().reset_index()\n"
-                            "plt.figure(figsize=(12,6))\n"
-                            "sns.barplot(data=sales_by_product, x='Product', y='Revenue')\n"
-                            "plt.title('Total Sales by Product')\n"
-                            "plt.xticks(rotation=45)\n"
-                            "plt.tight_layout()\n"
-                            "plt.show()")
+        #nbf.v4.new_code_cell("# Visualize total sales by product\n"
+                            #"sales_by_product = df.groupby('Product')['Revenue'].sum().reset_index()\n"
+                            #"plt.figure(figsize=(12,6))\n"
+                            #"sns.barplot(data=sales_by_product, x='Product', y='Revenue')\n"
+                            #"plt.title('Total Sales by Product')\n"
+                            #"plt.xticks(rotation=45)\n"
+                            #"plt.tight_layout()\n"
+                            #"plt.show()"),
+        nbf.v4.new_code_cell("# Step 1: Get numeric column with highest std dev\n"
+                            #"excluded_columns = ['ID', '%sourceId']\n" #These should be unique enough that we don't need to exclude
+                            "excluded_columns = []\n"
+                            "numeric_df = df.select_dtypes(include='number').drop(columns=excluded_columns, errors='ignore')\n"
+                            "std_devs = numeric_df.std().sort_values(ascending=False)\n"
+                            "target_numeric_col = std_devs.index[0]\n"
+
+                            "# Step 2: Find best categorical column\n"
+                            "cat_cols = df.select_dtypes(include=['object', 'category']).columns\n"
+                            "cat_col_stats = [(col, df[col].nunique()) for col in cat_cols]\n"
+                            "cat_col_stats.sort(key=lambda x: x[1])  # Sort by number of unique values\n"
+
+                            "target_cat_col = None\n"
+                            "max_unique_allowed = 15\n"
+
+                            "# Prefer 5–15 unique values\n"
+                            "for col, unique_count in cat_col_stats:\n"
+                            "    if 5 <= unique_count <= max_unique_allowed:\n"
+                            "        target_cat_col = col\n"
+                            "        break\n"
+
+                            "# If no 5–15, try the lowest >15 (and plan to consolidate)\n"
+                            "if not target_cat_col:\n"
+                            "    for col, unique_count in cat_col_stats:\n"
+                            "        if unique_count > max_unique_allowed:\n"
+                            "            target_cat_col = col\n"
+                            "            # Consolidate here\n"
+                            "            top_n = max_unique_allowed\n"
+                            "            top_vals = df[col].value_counts().nlargest(top_n).index\n"
+                            "            df[col + '_grouped'] = df[col].where(df[col].isin(top_vals), other='Other')\n"
+                            "            target_cat_col = col + '_grouped'\n"
+                            "            break\n"
+
+                            "# If nothing yet, pick the lowest unique count >= 2 (don't want just one group)\n"
+                            "if not target_cat_col:\n"
+                            "    for col, unique_count in cat_col_stats:\n"
+                            "        if unique_count >= 2:\n"
+                            "            target_cat_col = col\n"
+                            "            break\n"
+
+                            "# Step 3: Plot\n"
+                            "if target_cat_col:\n"
+                            "    plt.figure(figsize=(12,6))\n"
+                            "    sns.barplot(data=df, x=target_cat_col, y=target_numeric_col, estimator='mean')\n"
+                            "    plt.title(f'Mean {target_numeric_col} by {target_cat_col}')\n"
+                            "    plt.xticks(rotation=75)\n"
+                            "    plt.tight_layout()\n"
+                            "    plt.show()\n"
+                            "else:\n"
+                            "    print('No suitable categorical column found.')\n")
     ]
 
     # Save to local directory
