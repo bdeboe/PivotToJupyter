@@ -41,7 +41,7 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
 	quit $$$OK
 }
 
-ClassMethod UpdateActionClass(pCube="HOLEFOODS")
+ClassMethod UpdateActionClass(pCube = "HOLEFOODS")
 {
     // Update actionClass for HoleFoods cube
     Set tSC=$$$OK
@@ -84,7 +84,7 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
                                 "pip install pyodbc pandas matplotlib seaborn sqlalchemy-iris\n"
                                 "```\n"
                                 "- Set up an ODBC DSN (e.g., `myirisdsn`) that connects to your IRIS instance."),
-        nbf.v4.new_code_cell("import pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom sqlalchemy import create_engine"),
+        nbf.v4.new_code_cell("import pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom sqlalchemy import create_engine\nfrom sqlalchemy.pool import NullPool"),
     
         nbf.v4.new_code_cell("# Set up the connection\n"
                             "user = '_SYSTEM'\n"
@@ -92,12 +92,14 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
                             "host = 'localhost'\n"
                             "port = 1972\n"
                             "namespace = 'USER'\n"
-                            "engine = create_engine(f'iris://{user}:{password}@{host}:{port}/{namespace}')"),
+                            "engine = create_engine(f'iris://{user}:{password}@{host}:{port}/{namespace}', poolclass=NullPool)"),
         nbf.v4.new_code_cell("# Query the "+tNewTableName+" table\n"
                             "query = '''\n"
                             "SELECT * FROM "+tNewTableName+"\n"
                             "'''\n"
-                            "df = pd.read_sql(query, engine)\n"
+                            "with engine.connect() as conn:\n"
+                            "    df = pd.read_sql(query, conn)\n"
+                            #"engine.dispose()\n"
                             "df.head()"),
         nbf.v4.new_code_cell("# Check for missing values and summary statistics\n"
                             "print(df.isnull().sum())\n"
