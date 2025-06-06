@@ -98,11 +98,11 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
         nbf.v4.new_code_cell("import pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom sqlalchemy import create_engine\nfrom sqlalchemy.pool import NullPool"),
     
         nbf.v4.new_code_cell("# Set up the connection -- change these as needed! \n"
-                            "user = '"+iris.system.Process.UserName()+"'\n"
+                            "user = 'SuperUser'\n"
                             "password = 'SYS'\n"
                             "host = 'localhost'\n"
                             "port = 1972\n"
-                            "namespace = '"+iris.system.Process.Namespace()+"'\n"
+                            "namespace = '"+iris.system.Process.NameSpace()+"'\n"
                             "engine = create_engine(f'iris://{user}:{password}@{host}:{port}/{namespace}', poolclass=NullPool)"),
         nbf.v4.new_code_cell("# Query the "+tNewTableName+" table\n"
                             "query = '''\n"
