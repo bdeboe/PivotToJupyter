@@ -55,3 +55,6 @@ The Dockerfile does two important steps for creating the notebook server:
 ```RUN python3 -m pip install notebook pandas matplotlib seaborn sqlalchemy-iris``` - this installs dependencies for both hosting the notebook server as well as installing the python libraries that the demo code in the generated notebook uses.
 
 ```CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''", "--ServerApp.root_dir=/usr/irissys/mgr/user/notebooks"]``` - this tells the container to run the notebook server when the container is started. I also needed to implement ```entrypoint.sh``` to ensure that iris-main is still executed so IRIS also starts with the container.
+Note that the custom action creates the notebook in a local folder, which is why we're starting Jupyter from inside the IRIS container rather than as a separate container.
+
+:information_source: Note that the above command starts the Jupyter notebook app at port 8888, but the `docker-compose.yml` file wires that to 61888 on your host. You can customize the port to use for building the URL through `^PivotToJupyter("jupyter-port")` as required (see also `src/PivotToJupyter/CustomKPIAction.cls`). 

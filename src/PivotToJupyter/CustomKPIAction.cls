@@ -35,7 +35,9 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
         Do ..GenerateNotebook(tNewTableName)
 
         // Navigate to new Jupyter notebook
-        Set pContext.command = "newWindow:http://localhost:61888/notebooks/"_tNewTableName_".ipynb"
+        set host = $g(^PivotToJupyter("jupyter-host"),"locahost"),
+            port = $g(^PivotToJupyter("jupyter-port"),8888)
+        Set pContext.command = "newWindow:http://"_host_":"_port_"/notebooks/"_tNewTableName_".ipynb"
 	}
 
 	quit $$$OK
