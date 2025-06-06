@@ -32,10 +32,15 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
 		Set tSC = ##class(%DeepSee.ResultSet).%CreateTable(pContext.cubeName,tNewTableName,tCurrFilterSpec)
 
         // Create a new Jupyter notebook based on new table
-        Do ..GenerateNotebook(tNewTableName)
+        try {
+            Do ..GenerateNotebook(tNewTableName)
+        } catch (ex) {
+            set ^PivotToJupyter("last-error") = $SYSTEM.Status.GetErrorText(ex.AsStatus())
+        }
+        
 
         // Navigate to new Jupyter notebook
-        set host = $g(^PivotToJupyter("jupyter-host"),"locahost"),
+        set host = $g(^PivotToJupyter("jupyter-host"),"localhost"),
             port = $g(^PivotToJupyter("jupyter-port"),8888)
         Set pContext.command = "newWindow:http://"_host_":"_port_"/notebooks/"_tNewTableName_".ipynb"
 	}
