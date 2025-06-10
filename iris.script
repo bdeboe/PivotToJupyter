@@ -10,3 +10,6 @@
     ; load classes
     zpm "load /opt/irisapp"
     Do ##class(PivotToJupyter.CustomKPIAction).UpdateActionClass()
+
+    set ^PivotToJupyter("jupyter-hostname") = "localhost"
+    set ^PivotToJupyter("jupyter-port") = 61888

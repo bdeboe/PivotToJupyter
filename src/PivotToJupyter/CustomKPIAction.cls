@@ -13,32 +13,42 @@ xmlns="http://www.intersystems.com/deepsee/kpi"
 
 ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject) As %Status
 {
-	if (pAction="PivotToJupyter") {
-        // Convert selected context to a new table
-		Set tCurrFilterSpec = $P(pContext.currFilterSpec," ",2,*)
-        If tCurrFilterSpec="" {
-            // Check filters to see if no context is selected but filters are applied
-            Set tRS=##class(%DeepSee.ResultSet).%New()
-            Do tRS.%PrepareMDX(pContext.mdx)
-            Do tRS.%GetFiltersForCellRange(.tFilters,0,0,,,,1,1)
-            set f=$O(tFilters(""))
-            While f'="" {
-                Set tCurrFilterSpec=tCurrFilterSpec_"%FILTER "_tFilters(f)
-                set f=$O(tFilters(f))
+    set tSC = $$$OK
+    try {
+	    if (pAction="PivotToJupyter") {
+            // Convert selected context to a new table
+            Set tCurrFilterSpec = $P(pContext.currFilterSpec," ",2,*)
+            If tCurrFilterSpec="" {
+                // Check filters to see if no context is selected but filters are applied
+                Set tRS=##class(%DeepSee.ResultSet).%New()
+                Do tRS.%PrepareMDX(pContext.mdx)
+                Do tRS.%GetFiltersForCellRange(.tFilters,0,0,,,,1,1)
+                set f=$O(tFilters(""))
+                While f'="" {
+                    Set tCurrFilterSpec=tCurrFilterSpec_"%FILTER "_tFilters(f)
+                    set f=$O(tFilters(f))
+                }
+                Set tCurrFilterSpec = $P(tCurrFilterSpec," ",2,*)
             }
-		    Set tCurrFilterSpec = $P(tCurrFilterSpec," ",2,*)
+            set ^PivotToJupyter("last-filterspec") = tCurrFilterSpec
+            Set tNewTableName = "PivotToJupyter."_pContext.cubeName_$translate($zdt($h,8)," :","")
+            Set tSC = ##class(%DeepSee.ResultSet).%CreateTable(pContext.cubeName,tNewTableName,tCurrFilterSpec)
+            quit:$$$ISERR(tSC)
+
+            // Create a new Jupyter notebook based on new table
+            Do ..GenerateNotebook(tNewTableName)
+            
+
+            // Navigate to new Jupyter notebook
+            set host = $g(^PivotToJupyter("jupyter-host"),"localhost"),
+                port = $g(^PivotToJupyter("jupyter-port"),8888)
+            Set pContext.command = "newWindow:http://"_host_":"_port_"/notebooks/"_tNewTableName_".ipynb"
         }
-		Set tNewTableName = "PivotToJupyter."_pContext.cubeName_$translate($zdt($h,8)," :","")
-		Set tSC = ##class(%DeepSee.ResultSet).%CreateTable(pContext.cubeName,tNewTableName,tCurrFilterSpec)
-
-        // Create a new Jupyter notebook based on new table
-        Do ..GenerateNotebook(tNewTableName)
-
-        // Navigate to new Jupyter notebook
-        Set pContext.command = "newWindow:http://localhost:61888/notebooks/"_tNewTableName_".ipynb"
-	}
-
-	quit $$$OK
+	} catch (ex) {
+        set tSC = ex.AsStatus()
+    }
+    set:$$$ISERR(tSC) ^PivotToJupyter("last-error") = tSC
+	quit tSC
 }
 
 ClassMethod UpdateActionClass(pCube = "HOLEFOODS")
@@ -63,6 +73,7 @@ ClassMethod UpdateActionClass(pCube = "HOLEFOODS")
 ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
 {
     import nbformat as nbf
+    import iris
     from pathlib import Path
     
     # Create a new notebook
@@ -86,12 +97,12 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
                                 "- Set up an ODBC DSN (e.g., `myirisdsn`) that connects to your IRIS instance."),
         nbf.v4.new_code_cell("import pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom sqlalchemy import create_engine\nfrom sqlalchemy.pool import NullPool"),
     
-        nbf.v4.new_code_cell("# Set up the connection\n"
-                            "user = '_SYSTEM'\n"
+        nbf.v4.new_code_cell("# Set up the connection -- change these as needed! \n"
+                            "user = 'SuperUser'\n"
                             "password = 'SYS'\n"
                             "host = 'localhost'\n"
                             "port = 1972\n"
-                            "namespace = 'USER'\n"
+                            "namespace = '"+iris.system.Process.NameSpace()+"'\n"
                             "engine = create_engine(f'iris://{user}:{password}@{host}:{port}/{namespace}', poolclass=NullPool)"),
         nbf.v4.new_code_cell("# Query the "+tNewTableName+" table\n"
                             "query = '''\n"
