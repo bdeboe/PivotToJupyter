@@ -36,8 +36,7 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
             quit:$$$ISERR(tSC)
 
             // Create a new Jupyter notebook based on new table
-            Do ..GenerateNotebook(tNewTableName)
-            
+            Do ..GenerateNotebook(tNewTableName, tCurrFilterSpec)
 
             // Navigate to new Jupyter notebook
             set host = $g(^PivotToJupyter("jupyter-host"),"localhost"),
@@ -70,7 +69,7 @@ ClassMethod UpdateActionClass(pCube = "HOLEFOODS")
     Quit tSC
 }
 
-ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
+ClassMethod GenerateNotebook(tNewTableName, tCurrFilterSpec) [ Language = python ]
 {
     import nbformat as nbf
     import iris
@@ -187,6 +186,15 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
                             "else:\n"
                             "    print('No suitable categorical column found.')\n")
     ]
+
+    if tCurrFilterSpec:
+        specArray = tCurrFilterSpec.split(" %FILTER ")
+
+        specMessageArray = ["\n\nThe following context was used:"]
+        specMessageArray.extend([f"- {s}" for s in specArray])
+        specMessage = "\n".join(specMessageArray)
+
+        nb.cells[0]['source'] += specMessage
 
     # Save to local directory
     notebookDir = Path("notebooks")
