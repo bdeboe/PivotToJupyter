@@ -7,7 +7,8 @@ XData KPI [ XMLNamespace = "http://www.intersystems.com/deepsee/kpi" ]
 xmlns="http://www.intersystems.com/deepsee/kpi"
  name="PivotToJupyter Custom Action">
 
-<action name="PivotToJupyter"/>
+<action name="JupyterChart" displayName="Build chart in Jupyter" />
+<action name="JupyterML" displayName="Build model in Jupyter" />
 </kpi>
 }
 
@@ -15,7 +16,7 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
 {
     set tSC = $$$OK
     try {
-	    if (pAction="PivotToJupyter") {
+	    if (pAction="JupyterChart") || (pAction="JupyterML") {
             // Convert selected context to a new table
             Set tCurrFilterSpec = $P(pContext.currFilterSpec," ",2,*)
             If tCurrFilterSpec="" {
@@ -31,12 +32,17 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
                 Set tCurrFilterSpec = $P(tCurrFilterSpec," ",2,*)
             }
             set ^PivotToJupyter("last-filterspec") = tCurrFilterSpec
-            Set tNewTableName = "PivotToJupyter."_pContext.cubeName_$translate($zdt($h,8)," :","")
+            set cube = ##class(%DeepSee.Utils).%GetCubeName(pContext.cubeName)
+            Set tNewTableName = "PivotToJupyter."_cube_$translate($zdt($h,8)," :","")
             Set tSC = ##class(%DeepSee.ResultSet).%CreateTable(pContext.cubeName,tNewTableName,tCurrFilterSpec)
             quit:$$$ISERR(tSC)
 
             // Create a new Jupyter notebook based on new table
-            Do ..GenerateNotebook(tNewTableName)
+            if (pAction="JupyterChart") {
+                Do ..GenerateNotebook(tNewTableName)
+            } else {
+                do ..GenerateMLNotebook(tNewTableName)
+            }
             
 
             // Navigate to new Jupyter notebook
@@ -68,6 +74,106 @@ ClassMethod UpdateActionClass(pCube = "HOLEFOODS")
     Quit:$$$ISERR(tSC) tSC
 
     Quit tSC
+}
+
+ClassMethod GenerateMLNotebook(tNewTableName As %String) [ Language = python ]
+{
+    import nbformat as nbf
+    import iris
+    from pathlib import Path
+    
+    # Create a new notebook
+    nb = nbf.v4.new_notebook()
+    
+    nb["metadata"]["kernelspec"] = {
+        "name": "python3",
+        "display_name": "Python 3",
+        "language": "python"
+    }
+    
+    # Add cells
+    nb.cells = [
+        nbf.v4.new_markdown_cell("# InterSystems IRIS BI - Dynamic Notebook Example\n"
+                                "This notebook connects to an IRIS instance and queries the `"+tNewTableName+"` table, and then uses [H2O AutoML](https://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html) to build a predictive model based on the data."),
+        nbf.v4.new_markdown_cell("## Prerequisites\n"
+                                "Install required packages:\n"
+                                "```bash\n"
+                                "pip install pandas sqlalchemy-iris h2o\n"
+                                "```\n"),
+
+        nbf.v4.new_code_cell("import pandas as pd\nfrom sqlalchemy import create_engine\nfrom sqlalchemy.pool import NullPool"),
+    
+        nbf.v4.new_code_cell("# Set up the connection -- change these as needed! \n"
+                            "user = 'SuperUser'\n"
+                            "password = 'SYS'\n"
+                            "host = 'localhost'\n"
+                            "port = 1972\n"
+                            "namespace = '"+iris.system.Process.NameSpace()+"'\n"
+                            "engine = create_engine(f'iris://{user}:{password}@{host}:{port}/{namespace}', poolclass=NullPool)"),
+        nbf.v4.new_code_cell("# Query the "+tNewTableName+" table\n"
+                            "query = '''\n"
+                            "SELECT * FROM "+tNewTableName+"\n"
+                            "'''\n"
+                            "with engine.connect() as conn:\n"
+                            "    df = pd.read_sql(query, conn)\n"
+                            "\n"
+                            "df.head()"),
+        nbf.v4.new_code_cell("# Check for missing values and summary statistics\n"
+                            "print(df.isnull().sum())\n"
+                            "df.describe()"),
+
+                            
+        nbf.v4.new_markdown_cell("## Machine Learning\n"
+                            "In this section, we'll set up H2O and prepare the data for modeling. Make sure to configure the column to predict in the cell below."),
+
+        nbf.v4.new_code_cell("import h2o\nfrom h2o import H2OFrame\nfrom h2o.automl import H2OAutoML\n\nh2o.init()"),
+
+        nbf.v4.new_code_cell("# select training data from our data frame\n"
+                                "remove_columns = [\"ID\",\"%sourceId\"]   # add any trailing indicators\n"
+                                "all_data = H2OFrame(df.drop(columns=remove_columns))\n\n"
+                                "# split into 80% training data and 10% each for test and validation\n"
+                                "train_data, test_data, validation_data = all_data.split_frame(ratios=[.8, .1])\n\n"
+                                "# Identify predictors and response\n"
+                                "x = train_data.columns\n"
+                                "y = \"\" # PICK A COLUMN!\n"
+                                "x.remove(y)"),
+
+        nbf.v4.new_code_cell("# Run AutoML for 10 base models\n"
+                                "aml = H2OAutoML(max_models=10, seed=1)\n"
+                                "aml.train(x=x, y=y, training_frame=train_data)\n\n"
+                                "# View the AutoML Leaderboard\n"
+                                "aml.leaderboard.head()"),
+
+        nbf.v4.new_code_cell("# print details of best model\naml.leader"),
+
+        nbf.v4.new_code_cell("test_predictions = aml.predict(test_data)\n"
+                                "full_test = test_data[:,y].cbind(test_predictions)\n"
+                                "full_test.head()"),
+
+        nbf.v4.new_code_cell("from sqlalchemy import text\n"
+                                "model_path = h2o.save_model(model=aml.leader, path=\"/tmp/mymodel\", force=True)\n"
+                                "sql = text('CREATE OR REPLACE PROCEDURE demo.predict(observation VARCHAR) '\n"
+                                "                +' RETURNS DOUBLE '\n"
+                                "                +' LANGUAGE Python '\n"
+                                "                +' { \\n'\n"
+                                "                    +'import h2o \\n'\n"
+                                "                    +'from ast import literal_eval \\n'\n"
+                                "                    +'h2o.init() \\n'\n"
+                                "                    +'input = h2o.H2OFrame(literal_eval(observation)) \\n'\n"
+                                "                    +'model = h2o.load_model(\\''+model_path+'\\') \\n'\n"
+                                "                    +'return model.predict(input)[0,0] '\n"
+                                "                +' }')\n"
+                                "engine.connect().execute(sql)")
+    ]
+
+    # Save to local directory
+    notebookDir = Path("notebooks")
+    notebookDir.mkdir(parents=True, exist_ok=True)
+    notebook_path = Path("notebooks",tNewTableName+".ipynb").resolve()
+    with open(notebook_path, "w", encoding="utf-8") as f:
+        nbf.write(nb, f)
+
+    return
 }
 
 ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
