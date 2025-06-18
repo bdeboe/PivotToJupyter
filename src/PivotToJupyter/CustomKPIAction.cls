@@ -126,7 +126,7 @@ ClassMethod GenerateMLNotebook(tNewTableName As %String) [ Language = python ]
         nbf.v4.new_markdown_cell("## Machine Learning\n"
                             "In this section, we'll set up H2O and prepare the data for modeling. Make sure to configure the column to predict in the cell below."),
 
-        nbf.v4.new_code_cell("import h2o\nfrom h2o import H2OFrame\nfrom h2o.automl import H2OAutoML\n\nh2o.init()"),
+        nbf.v4.new_code_cell("import h2o, warnings\nfrom h2o import H2OFrame\nfrom h2o.automl import H2OAutoML\n\nwarnings.filterwarnings('ignore')\nh2o.init()"),
 
         nbf.v4.new_code_cell("# select training data from our data frame\n"
                                 "remove_columns = [\"ID\",\"%sourceId\"]   # add any trailing indicators\n"
