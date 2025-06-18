@@ -39,11 +39,10 @@ ClassMethod %OnDashboardAction(pAction As %String, pContext As %ZEN.proxyObject)
 
             // Create a new Jupyter notebook based on new table
             if (pAction="JupyterChart") {
-                Do ..GenerateNotebook(tNewTableName)
+                Do ..GenerateNotebook(tNewTableName, tCurrFilterSpec)
             } else {
                 do ..GenerateMLNotebook(tNewTableName)
             }
-            
 
             // Navigate to new Jupyter notebook
             set host = $g(^PivotToJupyter("jupyter-host"),"localhost"),
@@ -90,7 +89,7 @@ ClassMethod GenerateMLNotebook(tNewTableName As %String) [ Language = python ]
         "display_name": "Python 3",
         "language": "python"
     }
-    
+
     # Add cells
     nb.cells = [
         nbf.v4.new_markdown_cell("# InterSystems IRIS BI - Dynamic Notebook Example\n"
@@ -181,7 +180,7 @@ ClassMethod GenerateMLNotebook(tNewTableName As %String) [ Language = python ]
     return
 }
 
-ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
+ClassMethod GenerateNotebook(tNewTableName, tCurrFilterSpec) [ Language = python ]
 {
     import nbformat as nbf
     import iris
@@ -195,7 +194,6 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
         "display_name": "Python 3",
         "language": "python"
     }
-    
     # Add cells
     nb.cells = [
         nbf.v4.new_markdown_cell("# InterSystems IRIS BI - Dynamic Notebook Example\n"
@@ -291,13 +289,22 @@ ClassMethod GenerateNotebook(tNewTableName) [ Language = python ]
                             "        plt.title(f'Count of Records by {target_cat_col}')\n"
                             "    else:\n"
                             "        sns.barplot(data=df, x=target_cat_col, y=target_numeric_col, estimator='mean')\n"
-                            "        plt.title(f'Mean {target_numeric_col} by {target_cat_col}')\n"
+                            "        plt.title(f'Mean {target_numeric_col}by {target_cat_col}')\n"
                             "    plt.xticks(rotation=75)\n"
                             "    plt.tight_layout()\n"
                             "    plt.show()\n"
                             "else:\n"
                             "    print('No suitable categorical column found.')\n")
     ]
+
+    if tCurrFilterSpec:
+        specArray = tCurrFilterSpec.split(" %FILTER ")
+
+        specMessageArray = ["\n\nThe following context was used:"]
+        specMessageArray.extend([f"- {s}" for s in specArray])
+        specMessage = "\n".join(specMessageArray)
+
+        nb.cells[0]['source'] += specMessage
 
     # Save to local directory
     notebookDir = Path("notebooks")
