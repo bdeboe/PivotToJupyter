@@ -94,11 +94,11 @@ ClassMethod GenerateMLNotebook(tNewTableName As %String) [ Language = python ]
     # Add cells
     nb.cells = [
         nbf.v4.new_markdown_cell("# InterSystems IRIS BI - Dynamic Notebook Example\n"
-                                "This notebook connects to an IRIS instance and queries the `"+tNewTableName+"` table, and then uses [H2O AutoML](https://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html) to build a predictive model based on the data."),
+                                "This notebook connects to an IRIS instance and queries the `"+tNewTableName+"` table, and then uses [H2O AutoML](https://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html) to build a predictive model based on the data. Don't forget to pick the column to be predicted before running all cells."),
         nbf.v4.new_markdown_cell("## Prerequisites\n"
                                 "Install required packages:\n"
                                 "```bash\n"
-                                "pip install pandas sqlalchemy-iris h2o\n"
+                                "pip install pandas sqlalchemy-iris h2o matplotlib\n"
                                 "```\n"),
 
         nbf.v4.new_code_cell("import pandas as pd\nfrom sqlalchemy import create_engine\nfrom sqlalchemy.pool import NullPool"),
@@ -146,9 +146,14 @@ ClassMethod GenerateMLNotebook(tNewTableName As %String) [ Language = python ]
 
         nbf.v4.new_code_cell("# print details of best model\naml.leader"),
 
-        nbf.v4.new_code_cell("test_predictions = aml.predict(test_data)\n"
-                                "full_test = test_data[:,y].cbind(test_predictions)\n"
-                                "full_test.head()"),
+        nbf.v4.new_code_cell("# now plot predictions against actual values\n"
+                                "import matplotlib.pyplot as plt\n"
+                                "test_predictions = aml.predict(test_data)\n"
+                                "fig, ax = plt.subplots()\n"
+                                "ax.scatter(test_data[:,y].as_data_frame(), test_predictions.as_data_frame())\n"
+                                "ax.set_xlabel(\"actual \"+y)\n"
+                                "ax.set_ylabel(\"predicted \"+y)\n"
+                                "plt.show()"),
 
         nbf.v4.new_code_cell("from sqlalchemy import text\n"
                                 "model_path = h2o.save_model(model=aml.leader, path=\"/tmp/mymodel\", force=True)\n"
@@ -164,7 +169,7 @@ ClassMethod GenerateMLNotebook(tNewTableName As %String) [ Language = python ]
                                 "                    +'return model.predict(input)[0,0] '\n"
                                 "                +' }')\n"
                                 "engine.connect().execute(sql)")
-    ]
+    ] 
 
     # Save to local directory
     notebookDir = Path("notebooks")
